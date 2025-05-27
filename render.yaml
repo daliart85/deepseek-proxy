@@ -1,11 +1,12 @@
-
 services:
   - type: web
     name: deepseek-proxy
     env: node
     plan: free
-    buildCommand: "npm install"
+    region: oregon
+    buildCommand: "yarn install"
     startCommand: "node deepseek_proxy_server.js"
     envVars:
       - key: DEEPSEEK_API_KEY
         sync: false
+    autoDeploy: true
