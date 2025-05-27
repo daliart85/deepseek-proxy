@@ -1,10 +1,11 @@
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const fetch = require("node-fetch");
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -12,39 +13,32 @@ app.use(bodyParser.json());
 app.post("/analyze", async (req, res) => {
   const { prompt } = req.body;
 
-  if (!prompt) {
-    return res.status(400).json({ error: "Prompt is required." });
-  }
-
   try {
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-      },
-      body: JSON.stringify({
+    const response = await axios.post(
+      "https://api.deepseek.com/chat/completions",
+      {
         model: "deepseek-chat",
         messages: [
-          { role: "system", content: "You are a professional physiotherapy doctor." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
+          { role: "system", content: "أنت مساعد طبي محترف." },
+          { role: "user", content: prompt }
+        ]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+        }
+      }
+    );
 
-    const data = await response.json();
-
-    if (data.choices && data.choices[0]) {
-      res.json({ result: data.choices[0].message.content });
-    } else {
-      res.status(500).json({ error: "No response from AI." });
-    }
-  } catch (err) {
-    console.error("Proxy error:", err);
-    res.status(500).json({ error: "Proxy request failed." });
+    const reply = response.data.choices[0].message.content;
+    res.json({ text: reply });
+  } catch (error) {
+    console.error("API Error:", error.message);
+    res.status(500).json({ error: "API error", detail: error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Proxy server running on port ${PORT}`);
+  console.log(`Proxy server running on port ${PORT}`);
 });
